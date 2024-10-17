@@ -1,0 +1,5 @@
+"C:\Users\ronhendy\Desktop\PBI PS\Move-PowerBIReports.ps1" -Force -SkipAuthentication -CSVFilePath "C:\Users\ronhendy\Desktop\PBI PS\Archive-To-Regular.csv" -Revert
+
+
+
+"C:\Users\ronhendy\Desktop\PBI PS\Move-PowerBIReports.ps1"  -CSVFilePath "C:\Users\ronhendy\Desktop\PBI PS\Regular-To-Archive.csv"
