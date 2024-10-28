@@ -50,30 +50,34 @@ foreach($file in Get-ChildItem -Path "$PSScriptRoot\..\Modules" -Filter *.psm1){
 
 $KEY_VAULT_NAME = "PBI1000-KV"
 if ($env:WEBSITE_INSTANCE_ID) {
-    Write-Verbose "Running in Azure Functions"
+    Write-Information "Running in Azure Functions"
     # Using KeyVault to get secrets in the cloud
     # Functins managed identity should have read access to the KeyVault
     Connect-AzAccount -Identity
     if(-not (Get-SecretVault | Where-Object {$_.ModuleName -eq "Az.KeyVault" -and $_.Name -eq $KEY_VAULT_NAME})){
-        Write-Verbose "SecretVault $KEY_VAULT_NAME not found. Regestering."
+        Write-Information "SecretVault $KEY_VAULT_NAME not found. Regestering."
         Register-SecretVault -Name $KEY_VAULT_NAME -ModuleName Az.KeyVault -VaultParameters @{ AZKVaultName = $KEY_VAULT_NAME; SubscriptionId = ((Get-AzContext).Subscription.Id) }
     }
 } else {
-    Write-Verbose "Running in Local Environment"
+    Write-Information "Running in Local Environment"
     # Using local SecretStore to get secrets locally
     # local SecretStore sould be configured upfront
 }
 
-$pbiCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $(Get-Secret -Name $CLIENT_ID_NAME -AsPlainText), $(Get-Secret -Name $SECRET_NAME)
+$clientId = Get-Secret -Name $CLIENT_ID_NAME -AsPlainText
+$clientSecret = Get-Secret -Name $SECRET_NAME
+# Write-* commands does not work after calling Get-Secret...
+
+$pbiCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList @($clientId, $clientSecret)
 
 # Logs in using a service principal against the Public cloud
-Connect-PowerBIServiceAccount -Tenant $TENANT_ID -ServicePrincipal -Credential $pbiCreds
+Connect-PowerBIServiceAccount -Tenant $TENANT_ID -ServicePrincipal -Credential $pbiCreds -ErrorAction Stop
 
 $headers = Get-PowerBIAccessToken
 $headers.Add('Content-Type', 'application/json')
 $accessToken = $headers['Authorization'].Replace('Bearer ', '')
 
-Write-Verbose "Connected to Power BI"
+Write-Information "Connected to Power BI"
 
 $report = Get-PowerBIReport -WorkspaceId $WSFrom -Name $ReportName
 
@@ -87,15 +91,34 @@ if (-not $report) {
 }
 
 $pbixReportFile = Join-Path $env:TMP -ChildPath "$($report.Name).pbix"
-Write-Verbose  "Exporting report '$ReportName' to the file $pbixReportFile"
+Write-Information  "Exporting report '$ReportName' to the file $pbixReportFile"
 if (Test-Path -Path $pbixReportFile) {
     Remove-Item -Path $pbixReportFile -Force | Out-Null
 }
-Export-PowerBIReport -Id $report.Id -OutFile $pbixReportFile | Out-Null
-$targetWorkspace = Get-PowerBIWorkspace -Id $WSTo -AccessToken $accessToken
-Write-Verbose  "Importing report from the file '$pbixReportFile' to the workspace $($targetWorkspace.Name)"
-Import-PowerBIReport -WorkspaceId $WSTo -FilePath $pbixReportFile -AccessToken $accessToken -WorkspaceIsPremiumCapacity $targetWorkspace.IsOnDedicatedCapacity -ImportMode CreateOrOverwrite | Out-Null
+Export-PowerBIReport -WorkspaceId $WSFrom -Id $report.Id -OutFile $pbixReportFile -ErrorAction Stop | Out-Null
+$targetWorkspace = Get-PowerBIWorkspace -Id $WSTo
+Write-Information "Importing report from the file '$pbixReportFile' to the workspace $($targetWorkspace.Name)"
+# Import-PowerBIReport `
+#     -WorkspaceId $WSTo `
+#     -FilePath $pbixReportFile `
+#     -AccessToken $accessToken `
+#     -WorkspaceIsPremiumCapacity $targetWorkspace.IsOnDedicatedCapacity `
+#     -ImportMode CreateOrOverwrite -ErrorAction Stop | Out-Null
+
+Import-PBIXToPowerBI `
+    -localPath $pbixReportFile `
+    -graphToken $accessToken `
+    -groupId $WSTo `
+    -importMode $ImportMode `
+    -wait -ErrorAction Stop
+
+# New-PowerBIReport - imports with a new dataset
+# New-PowerBIReport -Path $pbixReportFile -Name $report.Name -WorkspaceId $WSto -ConflictAction CreateOrOverwrite -ErrorAction Stop | Out-Null
+
+# delete temp file
 Remove-Item -Path $pbixReportFile -Force | Out-Null
+#delete original report
+Remove-PowerBIReport -Id $report.Id -WorkspaceId $WSFrom
 
 if($Error.Count -gt 0){
     $errorMessages = $Error | ForEach-Object { $_.Exception.Message }
@@ -105,7 +128,7 @@ if($Error.Count -gt 0){
         Body = $errorMessage
     })
     return
-}esle{
+}else{
     Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
         StatusCode = [HttpStatusCode]::OK
         Body = "Report $ReportName moved from workspace $WSFrom to workspace $WSTo. $(Get-Date)"})

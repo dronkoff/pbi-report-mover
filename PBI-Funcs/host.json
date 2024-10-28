@@ -2,8 +2,12 @@
   "version": "2.0",
   "logging": {
     "logLevel": {
-      "Function.Move-PBIReport": "Trace",
+      "Function.Move-PBIReport": "Information",
       "default": "Warning"
+    },
+    "console": {
+      "isEnabled": true,
+      "DisableColors": false
     },
     "applicationInsights": {
       "samplingSettings": {

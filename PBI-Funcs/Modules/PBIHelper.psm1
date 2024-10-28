@@ -101,7 +101,7 @@ function Import-PowerBIReport {
         $tempLocationUploadPathUrl = $response.url
 
         # TODO: Need to implememt upload without azcopy
-        throw "Large files cope is not implemented yet."
+        throw "Large files copy is not implemented yet."
 
         #& azcopy copy "$FilePath" "$tempLocationUploadPathUrl" --recursive=true --check-length=false
 
