@@ -3,6 +3,7 @@
   "logging": {
     "logLevel": {
       "Function.Move-PBIReport": "Information",
+      "Function.Rebind-PBIReport": "Information",
       "default": "Warning"
     },
     "console": {
