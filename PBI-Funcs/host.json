@@ -4,6 +4,8 @@
     "logLevel": {
       "Function.Move-PBIReport": "Information",
       "Function.Rebind-PBIReport": "Information",
+      "Function.Archive-PBIReport": "Information",
+      "Function.Restore-PBIReport": "Information",
       "default": "Warning"
     },
     "console": {

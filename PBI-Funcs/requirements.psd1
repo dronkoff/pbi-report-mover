@@ -6,4 +6,6 @@
     # To use the Az module in your function app, please uncomment the line below.
     # 'Az' = '12.*'
     "MicrosoftPowerBIMgmt" = "1.*"
+    "Az.Storage" = "7.*"
+    "AzTable" = "2.*"
 }

@@ -22,42 +22,6 @@ function New-FakePBIDataset{
     return Add-PowerBIDataSet -DataSet $dataset -WorkspaceId $WorkspaceId  
 }
 
-function Get-PBICredentials{
-    Param(
-        [Parameter(Mandatory = $true)]
-        [string]$KeyVaultName,
-        [Parameter(Mandatory = $false)]
-        [string]$ClientIdSecretName = "APP-REG-ClientId",
-        [Parameter(Mandatory = $false)]
-        [string]$ClientSecretSecretName = "APP-REG-Secret"
-
-    )
- 
-    if ($env:WEBSITE_INSTANCE_ID) {
-        Write-Information "Running in Cloud Environment"
-        # Using KeyVault to get secrets in the cloud
-        # Functions managed identity should have read access to the KeyVault
-        Connect-AzAccount -Identity
-        $clientId = Get-AzKeyVaultSecret -VaultName $KeyVaultName -Name $ClientIdSecretName -AsPlainText -ErrorAction Stop
-        $clientSecret = Get-AzKeyVaultSecret -VaultName $KeyVaultName -Name $ClientSecretSecretName -AsPlainText -ErrorAction Stop
-        If(-not $clientId -or -not $clientSecret){
-            throw "Failed to retrieve secrets $ClientIdSecretName and $ClientSecretSecretName from KeyVault $KeyVaultName."
-        }
-    } else {
-        Write-Information "Running in Local Environment"
-        # Tried SecretManagement module, but Write-* commands does not work after calling Get-Secret
-        # Staying with local.settings.json for locald development
-        $clientId = $Env:APP_REG_CLIENT_ID
-        $clientSecret = $Env:APP_REG_CLIENT_SECRET
-        if(-not $clientId -or -not $clientSecret){
-            throw "Failed to retrieve environment variables APP_REG_CLIENT_ID and APP_REG_CLIENT_SECRET from local settings."
-        }
-    }
-    
-    return New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList @($clientId, ($clientSecret | ConvertTo-SecureString -AsPlainText))    
-}
-
-
 function Import-PBIXToPowerBI {
     [CmdletBinding()]
     Param(

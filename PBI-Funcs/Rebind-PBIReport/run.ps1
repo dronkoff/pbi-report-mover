@@ -80,18 +80,6 @@ Invoke-PowerBIRestMethod -Url "/groups/$WorkspaceId/reports/$($report.Id)/Rebind
     -Method POST `
     -Body $body
 
-
-# $fakeDataset = New-PowerBIDataSet -Name ("Fake" + $dataset.Name) -Tables $fakeTables
-# $fakeDataset = Add-PowerBIDataSet -DataSet $fakeDataset -WorkspaceId $WorkspaceId  
-# $res = Invoke-PowerBIRestMethod -Url "groups/$($WorkspaceId)/datasets/$($report.DatasetId)/tables" -Method Get -OutFile $pbixReportFile
-# !!! It seems we cant even get the list of tables... So no clones.
-# Invoke-PowerBIRestMethod: One or more errors occurred. ({
-#     "code": "ItemNotFound",
-#     "message": "Dataset 8e09a5e6-7eb4-4899-ac7a-ff63733626ba is not Push API dataset."
-#   })
-
-
-
 # Associate values to output bindings by calling 'Push-OutputBinding'.
 Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
     StatusCode = [HttpStatusCode]::OK
