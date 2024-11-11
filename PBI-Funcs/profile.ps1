@@ -14,7 +14,8 @@
 if ($env:MSI_SECRET) {
     Disable-AzContextAutosave -Scope Process | Out-Null
     Connect-AzAccount -Identity
-}else{
+}
+else {
     if (-not $env:WEBSITE_INSTANCE_ID) {
         # When running locally, authenticate with Azure PowerShell using a PBI1000-AppReg service principal.
         $clientId = $Env:APP_REG_CLIENT_ID
@@ -29,7 +30,18 @@ if ($env:MSI_SECRET) {
 
 # You can also define functions or aliases that can be referenced in any of your PowerShell functions.
 
-function Get-PBICredentials{
+function Get-PartitionKey {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Guid
+    )
+    # Such PartitionKey is a GH Copilot Idea. Let it be, why not.
+    return [Guid]::Parse($Guid).ToString().Substring(0, 8)
+}
+
+
+
+function Get-PBICredentials {
     Param(
         [Parameter(Mandatory = $true)]
         [string]$KeyVaultName,
@@ -47,16 +59,17 @@ function Get-PBICredentials{
         Connect-AzAccount -Identity
         $clientId = Get-AzKeyVaultSecret -VaultName $KeyVaultName -Name $ClientIdSecretName -AsPlainText -ErrorAction Stop
         $clientSecret = Get-AzKeyVaultSecret -VaultName $KeyVaultName -Name $ClientSecretSecretName -AsPlainText -ErrorAction Stop
-        If(-not $clientId -or -not $clientSecret){
+        If (-not $clientId -or -not $clientSecret) {
             throw "Failed to retrieve secrets $ClientIdSecretName and $ClientSecretSecretName from KeyVault $KeyVaultName."
         }
-    } else {
+    }
+    else {
         Write-Information "Running in Local Environment"
         # Tried SecretManagement module, but Write-* commands does not work after calling Get-Secret
         # Staying with local.settings.json for locald development
         $clientId = $Env:APP_REG_CLIENT_ID
         $clientSecret = $Env:APP_REG_CLIENT_SECRET
-        if(-not $clientId -or -not $clientSecret){
+        if (-not $clientId -or -not $clientSecret) {
             throw "Failed to retrieve environment variables APP_REG_CLIENT_ID and APP_REG_CLIENT_SECRET from local settings."
         }
     }

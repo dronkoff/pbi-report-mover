@@ -5,12 +5,12 @@ param($HttpRequest, $TriggerMetadata)
 $ErrorActionPreference = "Stop"
 try {
     # GUID
-    $WorkspaceId = $HttpRequest.Query.WorkspaceId
+    [string]$WorkspaceId = $HttpRequest.Query.WorkspaceId
     if (-not $WorkspaceId) {
         $WorkspaceId = $HttpRequest.Body.WorkspaceId
     }
     # String
-    $ReportName = $HttpRequest.Query.ReportName
+    [string]$ReportName = $HttpRequest.Query.ReportName
     if (-not $ReportName) {
         $ReportName = $HttpRequest.Body.ReportName
     }
@@ -25,8 +25,6 @@ try {
     $TENANT_ID = $Env:TENANT_ID ? $Env:TENANT_ID : (throw "Environment variable TENANT_ID not found.")
     $KEY_VAULT_NAME = $Env:KEY_VAULT_NAME ? $Env:KEY_VAULT_NAME : (throw "Environment variable KEY_VAULT_NAME not found.")  
     $FAKE_DATASET_NAME = $Env:FAKE_DATASET_NAME ? $Env:FAKE_DATASET_NAME : (throw "Environment variable FAKE_DATASET_NAME not found.")  
-
-    Write-Information "Connected to Azure"
 
     $storageAccount = Get-AzStorageAccount -ResourceGroupName $STORAGE_ACCOUNT_RG -Name $STORAGE_ACCOUNT_NAME
     if (-not $storageAccount) {
@@ -99,7 +97,7 @@ try {
     # Using TableClient instead of Add-AzTableRow because Add-AzTableRow does not support AAD auth.
     # Such PartitionKey is a GH Copilot Idea. Let it be, why not.
     $tableEntity = New-Object -TypeName "Azure.Data.Tables.TableEntity" `
-        -ArgumentList ([Guid]::Parse($tableRow["ReportId"]).ToString().Substring(0, 8), $tableRow["ReportId"])
+        -ArgumentList ((Get-PartitionKey -Guid $tableRow["ReportId"]), $tableRow["ReportId"])
     $tableRow.GetEnumerator() | ForEach-Object { $tableEntity.Add($_.Key, $_.Value) }
     #$storageTable.TableClient.AddEntity($tableEntity, [System.Threading.CancellationToken]::None)
     $storageTable.TableClient.UpsertEntity($tableEntity, [Azure.Data.Tables.TableUpdateMode]::Replace, [System.Threading.CancellationToken]::None)
