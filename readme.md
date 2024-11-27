@@ -53,3 +53,25 @@ Manully create an empty dataset with the name FakeDataset in the workspace calle
   Enable, Specific Securtiy Groups -> Add AAD Group.
 - PBI Admin Portal -> Admin API Settings -> Service Princical can access read-only admin APIs  
   Enable, Specific Securtiy Groups -> Add AAD Group.
+
+Use `local.settings.json` to store local environment variables.
+
+```json
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "powershell",
+    "FUNCTIONS_WORKER_RUNTIME_VERSION": "7.4",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "TENANT_ID": "[...]",
+    "KEY_VAULT_NAME": "[...]",
+    "APP_REG_CLIENT_ID": "[...]",
+    "APP_REG_CLIENT_SECRET": "[...]",
+    "FAKE_DATASET_NAME": "FakeDataset",
+    "STORAGE_ACCOUNT_RG": "[...]",
+    "STORAGE_ACCOUNT_NAME": "[...]",
+    "BLOB_CONTAINER_NAME": "pbix-archive",
+    "TABLE_NAME": "pbixarchive"
+  }
+}
+```
