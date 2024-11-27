@@ -25,6 +25,8 @@ Manully create an empty dataset with the name FakeDataset in the workspace calle
 - Create record with archived report information in storage table
 - Delete report from workspace
 
+example: http://localhost:7071/api/Archive-PBIReport?WorkspaceId=[WS_ID]&ReportName=[REPORT_NAME]
+
 #### Restore
 
 - Read the archived report information from storage table
@@ -35,6 +37,8 @@ Manully create an empty dataset with the name FakeDataset in the workspace calle
 - Delete fake dataset that was imported with pbix file from the workspace
 - Delete record from storage table
 - Delete pbix file from blob storage
+
+example: http://localhost:7071/api/Restore-PBIReport?WorkspaceId=[WS_ID]&ReportId=[REPORT_ID]
 
 ✔️ Works with incremental refresh enabled datasets.
 
